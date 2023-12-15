@@ -1,0 +1,65 @@
+apiVersion: mcad.ibm.com/v1beta1
+kind: AppWrapper
+metadata:
+  name: aw-wait-20-wecs-01
+spec:
+  # schedulingSpec:
+  #   minAvailable: 1
+  #   requeuing:
+  #       timeInSeconds: 120
+  #       growthType: "exponential" 
+  priority: 9
+  resources:
+    GenericItems:
+    - replicas: 1
+      # completionstatus: Complete
+      completionstatus: Complete,Failed
+      custompodresources:
+      - replicas: 1
+        requests:
+          cpu: 500m
+          memory: 512Mi
+          nvidia.com/gpu: 0
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          nvidia.com/gpu: 0
+      generictemplate:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: aw-wait-20-wecs
+          # labels:
+          #   appwrapper.mcad.ibm.com: defaultaw-schd-spec-with-timeout-1
+        spec:
+          parallelism: 1
+          completions: 1
+          template:
+            metadata:
+              labels:
+                appwrapper.mcad.ibm.com: "aw-wait-20-wecs"
+            spec:
+              containers:
+              - name: aw-wait-20
+                image: ubuntu:latest
+                command: [ "/bin/bash", "-c", "--" ]
+                args: [ "sleep 20" ]
+                resources:
+                  requests:
+                    memory: "512Mi"
+                    cpu: "500m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+              restartPolicy: Never
+  schedulingSpec:
+    clusterScheduling:
+      clusters:
+      - name: wec9
+    dispatchDuration: {}
+    requeuing:
+      growthType: exponential
+      maxNumRequeuings: 0
+      maxTimeInSeconds: 0
+      numRequeuings: 0
+      timeInSeconds: 300
