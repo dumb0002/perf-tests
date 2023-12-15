@@ -1,0 +1,37 @@
+## Appwrappers module provides a module for creating / deleting appwrappers.
+
+## Input params
+{{$actionName := .actionName}}
+{{$namespaces := .namespaces}}
+{{$tuningSet := .tuningSet}}
+{{$smallAppwrappersPerNamespace := .smallAppwrappersPerNamespace}}
+{{$mediumAppwrappersPerNamespace := .mediumAppwrappersPerNamespace}}
+{{$bigAppwrappersPerNamespace := .bigAppwrappersPerNamespace}}
+
+steps:
+- name: "{{$actionName}} k8s Appwrappers"
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: {{$bigAppwrappersPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: big-appwrapper
+      objectTemplatePath: appwrapper-wait.yaml
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: {{$mediumAppwrappersPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: medium-appwrapper
+      objectTemplatePath: appwrapper.yaml
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+    replicasPerNamespace: {{$smallAppwrappersPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: small-appwrapper
+      objectTemplatePath: appwrapper.yaml
