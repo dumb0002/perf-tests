@@ -14,6 +14,7 @@ steps:
   - namespaceRange:
       min: 1
       max: {{$namespaces}}
+      Basename: "aw-big-exp"
     replicasPerNamespace: {{$bigAppwrappersPerNamespace}}
     tuningSet: {{$tuningSet}}
     objectBundle:
@@ -22,14 +23,24 @@ steps:
   - namespaceRange:
       min: 1
       max: {{$namespaces}}
+      #Basename: "aw-medium-exp"
     replicasPerNamespace: {{$mediumAppwrappersPerNamespace}}
     tuningSet: {{$tuningSet}}
     objectBundle:
     - basename: medium-appwrapper
       objectTemplatePath: appwrapper-medium.yaml
-  - namespaceRange:
-      min: 1
-      max: {{$namespaces}}
+  # - namespaceRange:
+  #     min: 1
+  #     max: {{$namespaces}}
+  #     Basename: "aw-exp"
+  #   replicasPerNamespace: {{$smallAppwrappersPerNamespace}}
+  #   tuningSet: {{$tuningSet}}
+  #   objectBundle:
+  #   - basename: small-appwrapper
+  #     objectTemplatePath: appwrapper-small.yaml
+  - NamespaceList: 
+    - aw-exps-1
+    - aw-exps-2
     replicasPerNamespace: {{$smallAppwrappersPerNamespace}}
     tuningSet: {{$tuningSet}}
     objectBundle:

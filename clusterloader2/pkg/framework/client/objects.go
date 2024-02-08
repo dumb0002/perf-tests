@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"encoding/json"
 
 	apiv1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +36,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/storage/names"
+
+	arbv1 "github.com/project-codeflare/multi-cluster-app-dispatcher/pkg/apis/controller/v1beta1"
 )
 
 const (
@@ -272,12 +277,81 @@ func CreateObject(dynamicClient dynamic.Interface, namespace string, name string
 	gvk := obj.GroupVersionKind()
 	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
 	obj.SetName(name)
+	obj.SetNamespace(namespace)
+
+	objKind := obj.GetKind()
+	if objKind == "AppWrapper"{
+		content := obj.UnstructuredContent()
+
+		var appwrapper *arbv1.AppWrapper
+		d, _ := json.Marshal(content)
+		json.Unmarshal([]byte(d), &appwrapper)
+		
+		var container = []arbv1.AppWrapperGenericResource{}
+		var replace = false
+		// NOTE: loop through each generic item and assign generated name if one is not provided
+		for _, genericItem := range appwrapper.Spec.AggrResources.GenericItems {
+			objectName := genericItem.GenericTemplate			
+			var unstruct unstructured.Unstructured
+			unstruct.Object = make(map[string]interface{})
+			var blob interface{}
+			if err := json.Unmarshal(objectName.Raw, &blob); err != nil {
+				fmt.Errorf("[genNamesForGenericItemsIfNeeded] Error unmarshalling, err=%#v", err)
+				return err
+			}
+			unstruct.Object = blob.(map[string]interface{}) // set object to the content of the blob after Unmarshalling
+			//name := ""
+			if md, ok := unstruct.Object["metadata"]; ok {
+				metadata := md.(map[string]interface{})
+				if _, ok := metadata["namespace"]; ok {
+					if err := unstructured.SetNestedField(unstruct.Object, namespace, "metadata", "namespace" ) ; err != nil {
+						fmt.Errorf("Error creating an : %v", err)
+						return err
+					}
+				}else{
+					fmt.Errorf("genericItem is missing namespace")
+				}
+				if _, ok := metadata["name"]; !ok {
+					replace = true
+					workloadName := names.SimpleNameGenerator.GenerateName(name +"-")
+					fmt.Println("[genNamesForGenericItemsIfNeeded] Generated name for resource: %s .", name)
+					if err := unstructured.SetNestedField(unstruct.Object, workloadName, "metadata", "name" ) ; err != nil {
+						fmt.Errorf("[genNamesForGenericItemsIfNeeded] Error generating name, err=%#v",err)
+						return err
+					}
+					var gt runtime.RawExtension
+					if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct.Object, &gt) ; err != nil {
+						fmt.Errorf("[genNamesForGenericItemsIfNeeded] Error marshalling, err=%#v",err)
+						return err
+					}
+					genericItem.GenericTemplate = gt
+				}
+				container = append(container, genericItem)
+			}
+		}
+		// replace genericItems if at least one item was missing a name and the code above generated it 
+		if replace && len(container) > 0 {
+			appwrapper.Spec.AggrResources.GenericItems = container
+		}
+
+		data, _ := json.Marshal(appwrapper)
+
+		//Update the object with the new content
+		contentNew := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(data), &contentNew); err != nil {
+			fmt.Errorf("[genNamesForGenericItemsIfNeeded] Error unmarshalling, err=%#v", err)
+			return err
+		}
+
+		obj.SetUnstructuredContent(contentNew)
+	}
 	createFunc := func() error {
 		_, err := dynamicClient.Resource(gvr).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 		return err
 	}
 	options = append(options, Allow(apierrs.IsAlreadyExists))
 	return RetryWithExponentialBackOff(RetryFunction(createFunc, options...))
+	return nil
 }
 
 // PatchObject updates (using patch) object with given name, group, version and kind based on given object description.
