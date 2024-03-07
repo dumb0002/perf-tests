@@ -60,7 +60,7 @@ spec:
       {{end}}
       nodeSelector:
         kubernetes.io/os: linux
-        {{$PROMETHEUS_NODE_SELECTOR}}
+        {{StructuralData $PROMETHEUS_NODE_SELECTOR}}
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
