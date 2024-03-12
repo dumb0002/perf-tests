@@ -124,6 +124,8 @@ func NewProvider(initOptions *InitOptions) (Provider, error) {
 		return NewGKEKubemarkProvider(configs), nil
 	case KCPName:
 		return NewKCPProvider(configs), nil
+	case KSName:
+		return NewKSProvider(configs), nil
 	case KindName:
 		return NewKindProvider(configs), nil
 	case KubemarkName:
