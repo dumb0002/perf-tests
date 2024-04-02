@@ -1,0 +1,47 @@
+## Objects module provides a module for creating / deleting k8s objects.
+
+## Input params
+{{$actionName := .actionName}}
+{{$namespaces := .namespaces}}
+{{$tuningSet := .tuningSet}}
+{{$smallObjectsPerNamespace := .smallObjectsPerNamespace}}
+{{$mediumObjectsPerNamespace := .mediumObjectsPerNamespace}}
+{{$bigObjectsPerNamespace := .bigObjectsPerNamespace}}
+
+steps:
+- name: "{{$actionName}} k8s Objects"
+  phases:
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+      Basename: "aw-big-exp"
+    replicasPerNamespace: {{$bigObjectsPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: big-object
+      objectTemplatePath: test-workload.yaml
+  - namespaceRange:
+      min: 1
+      max: {{$namespaces}}
+      #Basename: "aw-medium-exp"
+    replicasPerNamespace: {{$mediumObjectsPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: medium-object
+      objectTemplatePath: test-workload.yaml
+  # - namespaceRange:
+  #     min: 1
+  #     max: {{$namespaces}}
+  #     Basename: "aw-exp"
+  #   replicasPerNamespace: {{$smallObjectsPerNamespace}}
+  #   tuningSet: {{$tuningSet}}
+  #   objectBundle:
+  #   - basename: small-object
+  #     objectTemplatePath: test-small-workload.yaml
+  - NamespaceList: 
+    - stress-test
+    replicasPerNamespace: {{$smallObjectsPerNamespace}}
+    tuningSet: {{$tuningSet}}
+    objectBundle:
+    - basename: small-object
+      objectTemplatePath: test-workload.yaml
