@@ -1,0 +1,32 @@
+kubectl --context cluster1 apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/name: test-pod
+  name: e2e-test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  namespace: e2e-test
+  labels:
+    app.kubernetes.io/name: test-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-pod
+  template:
+    metadata:
+      labels:
+        app: test-pod
+    spec:
+      containers:
+      - name: test-pod
+        image: ubuntu:latest
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "sleep 10" ]
+      restartPolicy: Always
+EOF
