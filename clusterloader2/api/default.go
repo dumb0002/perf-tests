@@ -36,7 +36,7 @@ func (conf *Config) SetDefaults() {
 // SetDefaults specifies the default values for namespace parameters.
 func (ns *NamespaceConfig) SetDefaults() {
 	if ns.Number == 0 {
-		ns.Number = 1
+		ns.Number = 0
 	}
 
 	if ns.Prefix == "" {

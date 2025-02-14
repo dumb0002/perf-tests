@@ -54,8 +54,8 @@ func createSimpleExecutor() Executor {
 
 // ExecuteTest executes test based on provided configuration.
 func (ste *simpleExecutor) ExecuteTest(ctx Context, conf *api.Config) *errors.ErrorList {
-	ctx.GetClusterFramework().SetAutomanagedNamespacePrefix(conf.Namespace.Prefix)
-	klog.V(2).Infof("AutomanagedNamespacePrefix: %s", ctx.GetClusterFramework().GetAutomanagedNamespacePrefix())
+	// ctx.GetClusterFramework().SetAutomanagedNamespacePrefix(conf.Namespace.Prefix)
+	// klog.V(2).Infof("AutomanagedNamespacePrefix: %s", ctx.GetClusterFramework().GetAutomanagedNamespacePrefix())
 
 	defer cleanupResources(ctx, conf)
 	ctx.GetFactory().Init(conf.TuningSets)
@@ -69,9 +69,9 @@ func (ste *simpleExecutor) ExecuteTest(ctx Context, conf *api.Config) *errors.Er
 		close(stopCh)
 		return errors.NewErrorList(fmt.Errorf("error while creating chaos monkey: %v", err))
 	}
-	if err := ste.prepareTestNamespaces(ctx, conf); err != nil {
-		return errors.NewErrorList(fmt.Errorf("error while preparing test namespaces: %w", err))
-	}
+	// if err := ste.prepareTestNamespaces(ctx, conf); err != nil {
+	// 	return errors.NewErrorList(fmt.Errorf("error while preparing test namespaces: %w", err))
+	// }
 	errList := ste.ExecuteTestSteps(ctx, conf.Steps)
 	close(stopCh)
 
